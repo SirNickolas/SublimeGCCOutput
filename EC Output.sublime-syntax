@@ -1,0 +1,48 @@
+%YAML 1.2
+
+hidden: true
+scope: text.ec-output
+
+variables:
+  start: ^Compiling\.\.\.$
+  end: ^Done\.$
+  abort: ^Aborted\.$
+
+  ignore: >-
+    ^(?:This application has requested the Runtime to terminate it in an unusual way\.|Please
+    contact the application's support team for more information\.|Process terminated with code 0)$
+  failure: ^Process terminated with code (-?\d+)$
+
+  assertion: ^Assertion failed!$
+  binary: '^Program: (.*)$'
+  location: '^File: (.*), Line (\d+)$'
+  expression: '^Expression: '
+
+contexts:
+  main:
+  - match: '{{start}}'
+    scope: comment.line.ec-output
+    push:
+    - match: '{{end}}|{{abort}}'
+      scope: comment.line.ec-output
+      pop: true
+    - include: Packages/GCCOutput/GCC Output.sublime-syntax
+  - match: '{{ignore}}|{{abort}}'
+    scope: comment.line.ec-output
+  - match: '{{failure}}'
+    scope: comment.line.ec-output
+    captures: { 1: invalid.illegal.return-code.ec-output }
+  - match: '{{assertion}}'
+    scope: invalid.deprecated.failed-assertion.ec-output
+    push:
+    - match: '{{binary}}'
+      captures: { 1: string.unquoted.file-name.ec-output }
+    - match: '{{location}}'
+      captures:
+        1: string.unquoted.file-name.ec-output
+        2: constant.numeric.line-number.ec-output
+    - match: '{{expression}}'
+      set: Packages/C++/C++.sublime-syntax
+      with_prototype:
+      - match: $
+        pop: true

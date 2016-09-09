@@ -1,0 +1,78 @@
+%YAML 1.2
+
+hidden: true
+scope: text.gcc-output
+
+variables:
+  file: |-
+    (?x:
+      (
+        (?:\w : [/\\])?    # Windows drive letter.
+        [\w./\\+-]*?       # File path.
+      )
+      ([\w.+-]*) (?=:) (?: # File name.
+        (:) (\d+)          # Line number.
+        (?:(:) (\d+))?     # Column number.
+      )?
+    )
+  message: |-
+    (?x:
+      ^ {{file}} (?:
+        (:) \s* (\w+ : | required[ ]from[ ]here)
+      )?
+    )
+  quotes: "[‘’`']"
+  included_from: ^((?:In file included)?\s*from) {{file}}[:,]$
+  candidate: '\bcandidate:'
+  switch: \[-[\w-]+\]$
+  hint: ^\s*([~^][~^ \t]*)$
+
+contexts:
+  main:
+  - match: '{{included_from}}'
+    captures:
+      1: comment.block.included-from.gcc-output
+      2: comment.block.file-path.gcc-output
+      3: string.unquoted.file-name.gcc-output
+      4: punctuation.separator.file-name.gcc-output
+      5: constant.numeric.line-number.gcc-output
+      6: punctuation.separator.file-name.gcc-output
+      7: constant.numeric.column-number-gcc-output
+  - match: '{{message}}'
+    captures:
+      1: comment.block.file-path.gcc-output
+      2: string.unquoted.file-name.gcc-output
+      3: punctuation.separator.file-name.gcc-output
+      4: constant.numeric.line-number.gcc-output
+      5: punctuation.separator.file-name.gcc-output
+      6: constant.numeric.column-number-gcc-output
+      7: punctuation.separator.file-name.gcc-output
+      8: keyword.control.gcc-output
+    push:
+    - match: '{{quotes}}'
+      scope: string.quoted.single.gcc-output punctuation.definition.string.begin.gcc-output
+      push:
+      - match: '{{quotes}}'
+        scope: string.quoted.single.gcc-output punctuation.definition.string.end.gcc-output
+        pop: true
+      - include: Packages/C++/C++.sublime-syntax
+      with_prototype:
+      - match: $
+        pop: true
+    - match: '{{candidate}}'
+      scope: comment.block.candidate.gcc-output
+      set: Packages/C++/C++.sublime-syntax
+      with_prototype:
+        - match: $
+          pop: true
+    - match: '{{switch}}'
+      scope: comment.block.switch.gcc-output
+    - match: $
+      pop: true
+  - match: '{{hint}}'
+    captures: { 1: keyword.operator.location-hint.gcc-output }
+  - match: ^(?=\s)
+    push: Packages/C++/C++.sublime-syntax
+    with_prototype:
+    - match: $
+      pop: true
