@@ -63,8 +63,8 @@ contexts:
       scope: comment.block.candidate.gcc-output
       set: Packages/C++/C++.sublime-syntax
       with_prototype:
-        - match: $
-          pop: true
+      - match: $
+        pop: true
     - match: '{{switch}}'
       scope: comment.block.switch.gcc-output
     - match: $
